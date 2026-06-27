@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calling System</title>
+<style>
+  :root{
+    --ink:#15212b; --paper:#f3efe6; --line:#d8cfbe;
+    --call:#1f7a4d; --wa:#1f8a5b; --sms:#2a5db0; --del:#b0432a; --accent:#c8642d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--paper);color:var(--ink);padding:14px 12px 70px;max-width:760px;margin:0 auto;}
+  header{display:flex;align-items:baseline;gap:10px;border-bottom:2px solid var(--ink);padding-bottom:8px;margin-bottom:12px;}
+  header h1{font-size:20px;letter-spacing:.5px;}
+  header .count{margin-left:auto;font-size:13px;font-weight:700;color:var(--accent);}
+
+  /* Daily target card */
+  .target{background:var(--ink);color:#fff;border-radius:12px;padding:13px 14px;margin-bottom:12px;}
+  .target .tline{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+  .target .tline b{font-size:15px;}
+  .target .tbig{font-size:22px;font-weight:800;margin-left:auto;font-variant-numeric:tabular-nums;}
+  .target .tbig small{font-size:13px;font-weight:500;opacity:.7;}
+  .bar{height:9px;background:rgba(255,255,255,.18);border-radius:6px;overflow:hidden;}
+  .bar > i{display:block;height:100%;background:var(--accent);border-radius:6px;transition:width .3s;}
+  .target .tedit{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:12px;opacity:.85;}
+  .target .tedit input{width:60px;padding:5px 7px;font-size:13px;border-radius:6px;border:none;text-align:center;}
+  .target .tedit button{padding:5px 10px;font-size:12px;background:var(--accent);}
+
+  .stats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+  .stat{flex:1;min-width:62px;background:#fbf8f1;border:1px solid var(--line);border-radius:8px;padding:7px 4px;text-align:center;}
+  .stat b{display:block;font-size:18px;}
+  .stat span{font-size:10px;color:#7a7466;text-transform:uppercase;letter-spacing:.5px;}
+
+  /* Follow-up banner */
+  .duebar{background:#fbe6cf;border:1px solid #e6b985;border-radius:10px;padding:10px 12px;margin-bottom:12px;
+    font-size:13px;font-weight:700;color:#9a5a13;display:none;}
+  .duebar.show{display:block;}
+
+  .panel{background:#fbf8f1;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:14px;}
+  .panel h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#6b6557;margin-bottom:10px;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+  input,textarea,select{font-size:15px;padding:10px 11px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);width:100%;font-family:inherit;}
+  .row input{flex:1;min-width:130px;}
+  textarea{resize:vertical;min-height:46px;}
+  label.sub{font-size:11px;color:#7a7466;display:block;margin:4px 2px;}
+
+  button{cursor:pointer;border:none;border-radius:8px;font-weight:700;font-size:14px;padding:10px 14px;color:#fff;}
+  .btn-add{background:var(--ink);width:100%;}
+  .btn-ghost{background:transparent;color:var(--ink);border:1px solid var(--line);}
+
+  .tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+  .tools button,.tools label{flex:1;min-width:110px;text-align:center;}
+  .filein{display:none;}
+  .fakefile{background:transparent;color:var(--ink);border:1px dashed var(--line);border-radius:8px;padding:10px;font-weight:700;font-size:14px;cursor:pointer;}
+
+  .filterbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:20px;padding:7px 13px;font-size:13px;font-weight:700;cursor:pointer;color:#6b6557;}
+  .chip.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+
+  .search{margin-bottom:12px;}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin-bottom:10px;}
+  .card.done{opacity:.6;}
+  .card.due{border-color:#e6b985;box-shadow:0 0 0 2px #fbe6cf;}
+  .card .top{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .card .name{font-weight:800;font-size:16px;}
+  .card .num{font-size:13px;color:#6b6557;margin-left:auto;font-variant-numeric:tabular-nums;}
+  .card .note{font-size:12px;color:#8a8475;margin:-2px 0 8px;}
+  .card .meta{font-size:11px;color:#a59c88;margin:-2px 0 8px;}
+  .badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;margin-bottom:8px;margin-right:5px;}
+  .b-new{background:#eee5d2;color:#7a6a45;} .b-done{background:#d7ecdd;color:#1f7a4d;}
+  .b-later{background:#fbe6cf;color:#b06a1f;} .b-no{background:#f1d9d1;color:#b0432a;}
+  .b-int{background:#d4e2f5;color:#2a5db0;}
+  .badge-due{background:#f5c98a;color:#7a4a05;}
+
+  .actions{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:8px;}
+  .actions a,.actions button{text-decoration:none;text-align:center;display:block;border-radius:7px;padding:9px 4px;font-size:13px;font-weight:700;color:#fff;}
+  .a-call{background:var(--call);} .a-wa{background:var(--wa);} .a-sms{background:var(--sms);}
+  .a-del{background:transparent;color:var(--del);border:1px solid var(--del);}
+
+  .statusrow{display:flex;gap:5px;flex-wrap:wrap;}
+  .statusrow button{flex:1;min-width:58px;font-size:11px;padding:7px 3px;background:#fff;color:#6b6557;border:1px solid var(--line);}
+  .statusrow button.sel{background:var(--ink);color:#fff;border-color:var(--ink);}
+
+  .empty{text-align:center;color:#9a9486;padding:30px 10px;font-size:14px;}
+  .hint{font-size:11px;color:#9a9486;margin:6px 0 12px;line-height:1.5;}
+  details{margin-bottom:14px;}
+  summary{cursor:pointer;font-size:13px;color:var(--accent);font-weight:700;}
+
+  /* follow-up date prompt */
+  .dlg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:20px;z-index:50;}
+  .dlg.show{display:flex;}
+  .dlg .box{background:#fbf8f1;border-radius:14px;padding:18px;width:100%;max-width:340px;}
+  .dlg h3{font-size:15px;margin-bottom:12px;}
+  .dlg input{margin-bottom:12px;}
+  .dlg .drow{display:flex;gap:8px;}
+  .dlg .drow button{flex:1;}
+</style>
+</head>
+<body>
+<header>
+  <h1>Calling System</h1>
+  <span class="count" id="count">0</span>
+</header>
+
+<!-- DAILY TARGET -->
+<div class="target">
+  <div class="tline">
+    <b>📞 Aaj ke calls</b>
+    <span class="tbig"><span id="todayCount">0</span><small> / <span id="targetVal">20</span></small></span>
+  </div>
+  <div class="bar"><i id="targetBar" style="width:0%"></i></div>
+  <div class="tedit">
+    Target set karein:
+    <input id="targetInput" type="number" min="1" value="20" inputmode="numeric">
+    <button onclick="saveTarget()">Set</button>
+  </div>
+</div>
+
+<!-- FOLLOW-UP BANNER -->
+<div class="duebar" id="duebar" onclick="setFilter('due')"></div>
+
+<div class="stats" id="stats"></div>
+
+<div class="panel">
+  <h2>Naya customer jodein</h2>
+  <div class="row">
+    <input id="f-name" placeholder="Naam">
+    <input id="f-num" placeholder="Mobile number" inputmode="numeric">
+  </div>
+  <textarea id="f-msg" placeholder="Is customer ke liye WhatsApp/SMS message (optional)"></textarea>
+  <div style="height:8px"></div>
+  <button class="btn-add" onclick="addOne()">+ Add customer</button>
+</div>
+
+<details>
+  <summary>Default WhatsApp / SMS message set karein</summary>
+  <div class="panel" style="margin-top:10px">
+    <textarea id="default-msg" placeholder="Default message...">Namaste! Hum apni service ke baare mein aapse baat karna chahte the.</textarea>
+    <label class="sub">Jin customers ka apna message nahi, unhe yahi jayega.</label>
+    <button class="btn-ghost" style="width:100%" onclick="saveDefault()">Save</button>
+  </div>
+</details>
+
+<div class="tools">
+  <label class="fakefile">📂 CSV import
+    <input class="filein" type="file" accept=".csv" onchange="importCSV(event)">
+  </label>
+  <button class="btn-ghost" onclick="exportCSV()">⬇ Export CSV</button>
+  <button class="btn-ghost" onclick="clearAll()">🗑 Clear all</button>
+</div>
+<div class="hint">CSV: column 1 = naam, column 2 = number, column 3 (optional) = message. Header row optional.</div>
+
+<div class="filterbar" id="filterbar"></div>
+<input class="search" id="search" placeholder="🔍 Naam ya number search..." oninput="render()">
+
+<div id="list"></div>
+
+<!-- follow-up date dialog -->
+<div class="dlg" id="dlg">
+  <div class="box">
+    <h3>Kab dobara call karna hai?</h3>
+    <input id="dlgDate" type="date">
+    <div class="drow">
+      <button class="btn-ghost" onclick="closeDlg()">Cancel</button>
+      <button class="btn-add" style="width:auto" onclick="confirmDlg()">Set reminder</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY="calling_customers_v3";
+const DKEY="calling_default_msg";
+const TKEY="calling_daily_target";
+const LKEY="calling_call_log"; // {date: count}
+const STATUSES=[
+  {k:"new",   label:"Pending",   badge:"b-new"},
+  {k:"done",  label:"Ho gaya",   badge:"b-done"},
+  {k:"later", label:"Baad mein", badge:"b-later"},
+  {k:"no",    label:"Nahi utha", badge:"b-no"},
+  {k:"int",   label:"Interested",badge:"b-int"},
+];
+let data=[];
+let filter="all";
+let dlgIndex=null;
+
+function todayStr(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function fmtDate(s){if(!s)return"";const[y,m,d]=s.split("-");return d+"/"+m+"/"+y.slice(2);}
+
+function load(){
+  try{data=JSON.parse(localStorage.getItem(KEY))||[];}catch(e){data=[];}
+  data.forEach(d=>{if(!d.status)d.status="new";});
+  const dm=localStorage.getItem(DKEY); if(dm) document.getElementById('default-msg').value=dm;
+  const t=localStorage.getItem(TKEY)||"20";
+  document.getElementById('targetInput').value=t;
+  document.getElementById('targetVal').textContent=t;
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(data));}
+function saveDefault(){localStorage.setItem(DKEY,document.getElementById('default-msg').value.trim());alert("Save ho gaya.");}
+function defMsg(){return (localStorage.getItem(DKEY)||document.getElementById('default-msg').value||"Namaste").trim();}
+
+function getTarget(){return parseInt(localStorage.getItem(TKEY)||"20")||20;}
+function saveTarget(){
+  const v=parseInt(document.getElementById('targetInput').value)||20;
+  localStorage.setItem(TKEY,v);
+  document.getElementById('targetVal').textContent=v;
+  render();
+}
+function getLog(){try{return JSON.parse(localStorage.getItem(LKEY))||{};}catch(e){return{};}}
+function todayCalls(){return getLog()[todayStr()]||0;}
+function bumpToday(){const l=getLog();const t=todayStr();l[t]=(l[t]||0)+1;localStorage.setItem(LKEY,JSON.stringify(l));}
+
+function cleanNum(n){return (n||"").replace(/[^\d+]/g,"");}
+function waNum(n){let x=n.replace(/\D/g,"");if(x.length===10)x="91"+x;if(x.startsWith("0"))x="91"+x.slice(1);return x;}
+
+function addOne(){
+  const name=document.getElementById('f-name').value.trim();
+  const num=cleanNum(document.getElementById('f-num').value);
+  const msg=document.getElementById('f-msg').value.trim();
+  if(!name||!num){alert("Naam aur number dono zaroori hain.");return;}
+  if(data.some(d=>d.num===num)){if(!confirm("Yeh number pehle se hai. Phir bhi add karein?"))return;}
+  data.unshift({name,num,msg,status:"new",followup:"",updated:""});
+  save();
+  document.getElementById('f-name').value="";document.getElementById('f-num').value="";document.getElementById('f-msg').value="";
+  render();
+}
+function del(i){if(confirm("Hatayein?")){data.splice(i,1);save();render();}}
+function clearAll(){if(confirm("Saara data delete? Pakka?")){data=[];save();render();}}
+
+// when a call button is tapped
+function onCall(i){bumpToday();data[i].updated=todayStr();save();setTimeout(render,400);}
+
+function setStatus(i,s){
+  data[i].status=s;
+  data[i].updated=todayStr();
+  if(s==="later"){ openDlg(i); return; } // ask for follow-up date
+  if(s!=="later") data[i].followup=""; // clear reminder if moved off "later"
+  save();render();
+}
+
+// follow-up date dialog
+function openDlg(i){
+  dlgIndex=i;
+  const d=new Date();d.setDate(d.getDate()+1); // default tomorrow
+  document.getElementById('dlgDate').value=todayStr.call(null);
+  document.getElementById('dlgDate').value=(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"));
+  document.getElementById('dlg').classList.add('show');
+}
+function closeDlg(){
+  // still mark as later even if cancelled, just no date
+  if(dlgIndex!=null){save();render();}
+  document.getElementById('dlg').classList.remove('show');dlgIndex=null;
+}
+function confirmDlg(){
+  const date=document.getElementById('dlgDate').value;
+  if(dlgIndex!=null){data[dlgIndex].followup=date;save();}
+  document.getElementById('dlg').classList.remove('show');dlgIndex=null;render();
+}
+
+function importCSV(e){
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=function(){
+    const lines=r.result.split(/\r?\n/).filter(l=>l.trim());
+    let start=0;
+    if(lines[0] && /name|naam|number|mobile|phone/i.test(lines[0])) start=1;
+    let added=0;
+    for(let i=start;i<lines.length;i++){
+      const c=splitCSV(lines[i]);
+      const name=(c[0]||"").trim();const num=cleanNum(c[1]||"");const msg=(c[2]||"").trim();
+      if(name&&num){data.push({name,num,msg,status:"new",followup:"",updated:""});added++;}
+    }
+    save();render();alert(added+" customers import ho gaye.");
+  };
+  r.readAsText(file);e.target.value="";
+}
+function splitCSV(line){const out=[];let cur="";let q=false;
+  for(let i=0;i<line.length;i++){const ch=line[i];
+    if(ch==='"')q=!q;else if(ch===','&&!q){out.push(cur);cur="";}else cur+=ch;}
+  out.push(cur);return out;}
+
+function exportCSV(){
+  let csv="name,number,message,status,followup\n";
+  data.forEach(d=>{csv+=`"${d.name}","${d.num}","${(d.msg||"").replace(/"/g,'""')}","${d.status}","${d.followup||""}"\n`;});
+  const blob=new Blob([csv],{type:"text/csv"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="customers.csv";a.click();
+}
+
+function isDue(d){return d.status==="later" && d.followup && d.followup<=todayStr();}
+
+function renderTarget(){
+  const t=getTarget(),c=todayCalls();
+  document.getElementById('todayCount').textContent=c;
+  document.getElementById('targetVal').textContent=t;
+  const pct=Math.min(100,Math.round(c/t*100));
+  document.getElementById('targetBar').style.width=pct+"%";
+}
+function renderDuebar(){
+  const due=data.filter(isDue).length;
+  const bar=document.getElementById('duebar');
+  if(due>0){bar.classList.add('show');bar.textContent=`🔔 Aaj ${due} follow-up call due hain — dekhne ke liye tap karein`;}
+  else bar.classList.remove('show');
+}
+function renderStats(){
+  const c={total:data.length};STATUSES.forEach(s=>c[s.k]=0);
+  data.forEach(d=>c[d.status]=(c[d.status]||0)+1);
+  document.getElementById('stats').innerHTML=`
+    <div class="stat"><b>${c.total}</b><span>Total</span></div>
+    <div class="stat"><b>${c.new}</b><span>Pending</span></div>
+    <div class="stat"><b>${c.done}</b><span>Done</span></div>
+    <div class="stat"><b>${c.later}</b><span>Baad mein</span></div>
+    <div class="stat"><b>${c.int}</b><span>Interested</span></div>`;
+}
+function renderFilters(){
+  const dueN=data.filter(isDue).length;
+  const opts=[{k:"all",label:"Sab"},{k:"due",label:"Due "+(dueN?`(${dueN})`:"")}].concat(STATUSES.map(s=>({k:s.k,label:s.label})));
+  document.getElementById('filterbar').innerHTML=opts.map(o=>
+    `<div class="chip ${filter===o.k?'on':''}" onclick="setFilter('${o.k}')">${o.label}</div>`).join("");
+}
+function setFilter(f){filter=f;render();window.scrollTo({top:0,behavior:'smooth'});}
+
+function render(){
+  renderTarget();renderDuebar();renderStats();renderFilters();
+  const q=document.getElementById('search').value.trim().toLowerCase();
+  const list=document.getElementById('list');
+  document.getElementById('count').textContent=data.length+" customers";
+
+  let arr=data.map((d,i)=>({d,i}));
+  // due first ordering
+  arr.sort((a,b)=>(isDue(b.d)?1:0)-(isDue(a.d)?1:0));
+
+  const shown=arr.filter(({d})=>{
+    if(filter==="due"){if(!isDue(d))return false;}
+    else if(filter!=="all" && d.status!==filter) return false;
+    if(q && !(d.name.toLowerCase().includes(q)||d.num.includes(q))) return false;
+    return true;
+  });
+  if(!shown.length){
+    list.innerHTML='<div class="empty">'+(data.length?'Koi match nahi mila.':'Abhi koi customer nahi. Upar se add karein ya CSV import karein.')+'</div>';
+    return;
+  }
+  list.innerHTML=shown.map(({d,i})=>{
+    const msg=encodeURIComponent(d.msg||defMsg());
+    const tel=d.num, wa=waNum(d.num);
+    const st=STATUSES.find(s=>s.k===d.status)||STATUSES[0];
+    const due=isDue(d);
+    return `<div class="card ${d.status==='done'?'done':''} ${due?'due':''}">
+      <div class="top">
+        <span class="name">${esc(d.name)}</span>
+        <span class="num">${esc(d.num)}</span>
+      </div>
+      <span class="badge ${st.badge}">${st.label}</span>
+      ${d.followup?`<span class="badge badge-due">🔔 ${fmtDate(d.followup)}</span>`:''}
+      ${d.msg?`<div class="note">📝 ${esc(d.msg)}</div>`:''}
+      ${d.updated?`<div class="meta">Last update: ${fmtDate(d.updated)}</div>`:''}
+      <div class="actions">
+        <a class="a-call" href="tel:${tel}" onclick="onCall(${i})">📞 Call</a>
+        <a class="a-wa" href="https://wa.me/${wa}?text=${msg}" target="_blank" rel="noopener">💬 WA</a>
+        <a class="a-sms" href="sms:${tel}?body=${msg}">✉️ SMS</a>
+        <button class="a-del" onclick="del(${i})">Delete</button>
+      </div>
+      <div class="statusrow">
+        ${STATUSES.map(s=>`<button class="${d.status===s.k?'sel':''}" onclick="setStatus(${i},'${s.k}')">${s.label}</button>`).join("")}
+      </div>
+    </div>`;
+  }).join("");
+}
+function esc(s){return (s||"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+load();render();
+</script>
+</body>
+</html>
